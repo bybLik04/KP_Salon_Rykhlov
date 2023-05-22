@@ -29,43 +29,27 @@ namespace KP_Salon_Rykhlov
             InitializeComponent();
         }
 
-        public static string connectionstr = "Server=localhost;Port=5432;Database=postgres;User Id=postgres;Password=12345;";
-        public string log = "";
-        public string hpass = "";
-        public string salt = "";
-        public string role = "";
+        private static string connectionstr = "Server=localhost;Port=5432;Database=postgres;User Id=postgres;Password=12345;";
+        public string log;
+        public string hpass;
+        public string salt;
+        public int staff_id;
+        public string role;
         private void SignIn_Button_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                string sql = "Select * from Users WHERE [Login] = '" + LoginBox.Text + "';";
-                NpgsqlConnection connection = new NpgsqlConnection(connectionstr);
-                connection.Open();
-                NpgsqlCommand cmd = new NpgsqlCommand(sql, connection);
-                NpgsqlDataReader dataReader = cmd.ExecuteReader();
-                while (dataReader.Read())
-                {
-                    log = dataReader.GetString(1);
-                    hpass = dataReader.GetString(2);
-                    salt = dataReader.GetString(3);
-                    role = dataReader.GetString(4);
-                }
-                connection.Close();
-            }
-            catch
-            {
-                MessageBox.Show("Нет доступа к Базе Данных!");
-                return;
-            }
             if (LoginBox.Text.Length > 0 & PasswordBox.ToString().Length > 0)
             {
+                GetUser();
                 if (LoginBox.Text == log)
                 {
-                    if (ComputeHash(PasswordBox.Password.ToString(), new SHA256CryptoServiceProvider(), salt) == hpass)
+                    string pass = HashPassword(PasswordBox.Password.ToString(), salt);
+                    if (pass == hpass)
                     {
-                        MainWindow window = new MainWindow();
+                        Getrole();
+                        MainWindow window = new MainWindow(role);
+                        Close();
                         window.Show();
-                        this.Hide();
+            
                     }
                     else
                     {
@@ -81,81 +65,88 @@ namespace KP_Salon_Rykhlov
             {
                 MessageBox.Show("Заполните все поля!");
             }
-
-            //if (user_data.Items.Count > 1)
-            //{
-            //    try
-            //    {
-            //        string sql2 = "Select * from Users WHERE [Login] = '" + LoginBox.Text + "' AND [Password] = '" + PasswordBox.Password.ToString() + "' AND admin;";
-            //        DataTable table2 = new DataTable();
-            //        OleDbConnection connection2 = new OleDbConnection(connectionstring);
-            //        connection2.Open();
-            //        OleDbCommand oleDbCommand2 = new OleDbCommand(sql2, connection2);
-            //        OleDbDataAdapter dataAdapter2 = new OleDbDataAdapter(oleDbCommand2);
-            //        dataAdapter2.Fill(table2);
-            //        user_data2.ItemsSource = table2.DefaultView;
-            //        connection2.Close();
-            //    }
-            //    catch
-            //    {
-            //        MessageBox.Show("Нет доступа к Базе Данных!");
-            //        return;
-            //    }
-            //    if (user_data2.Items.Count == 2)
-            //    {
-            //        MainWindow mainWindow = new MainWindow();
-            //        mainWindow.Show();
-            //        this.Hide();
-            //    }
-            //    else
-            //    {
-            //        MainWindow mainWindow = new MainWindow();
-            //        mainWindow.Show();
-
-                //        mainWindow.Std_num_lbl.Visibility = Visibility.Hidden;
-                //        mainWindow.StudentNumText.Visibility = Visibility.Hidden;
-                //        mainWindow.New_Lbl.Visibility = Visibility.Hidden;
-                //        mainWindow.ChangeText.Visibility = Visibility.Hidden;
-                //        mainWindow.UpdateBtn.Visibility = Visibility.Hidden;
-                //        mainWindow.DeleteBtn.Visibility = Visibility.Hidden;
-                //        mainWindow.AddBtn.Visibility = Visibility.Hidden;
-                //        mainWindow.log_lbl.Visibility = Visibility.Hidden;
-                //        mainWindow.log_txt.Visibility = Visibility.Hidden;
-                //        mainWindow.add_adm_Btn.Visibility = Visibility.Hidden;
-                //        mainWindow.del_adm_Btn.Visibility = Visibility.Hidden;
-                //        this.Hide();
-                //    }
-                //}
-                //else
-                //{
-                //    MessageBox.Show("Такого пользователя не существует!");
-                //}
         }
-
-        public static string ComputeHash(string input, HashAlgorithm algorithm, string salt2)
+        public void GetUser()
         {
-            Byte[] inputBytes = Encoding.UTF8.GetBytes(input);
-            Byte[] saltBytes = Encoding.UTF8.GetBytes(salt2);
-            // Combine salt and input bytes
-            Byte[] saltedInput = new Byte[saltBytes.Length + inputBytes.Length];
-            saltBytes.CopyTo(saltedInput, 0);
-            inputBytes.CopyTo(saltedInput, saltBytes.Length);
-
-            Byte[] hashedBytes = algorithm.ComputeHash(saltedInput);
-
-            return BitConverter.ToString(hashedBytes);
+            try
+            {
+                string sql = $"Select * from \"Salon\".accounts WHERE username = '{LoginBox.Text}'";
+                using (NpgsqlConnection connection = new NpgsqlConnection(connectionstr))
+                {
+                    connection.Open();
+                    try
+                    {
+                        using (NpgsqlCommand cmd = new NpgsqlCommand())
+                        {
+                            cmd.Connection = connection;
+                            cmd.CommandText = sql;
+                            using (NpgsqlDataReader dataReader = cmd.ExecuteReader())
+                            {
+                                while (dataReader.Read())
+                                {
+                                    log = dataReader.GetString(1);
+                                    hpass = dataReader.GetString(2);
+                                    salt = dataReader.GetString(3);
+                                    staff_id = dataReader.GetInt16(4);
+                                }
+                                connection.Close();
+                            }
+                        }
+                    }
+                    catch (Exception ex) {
+                        MessageBox.Show(ex.ToString());
+                    }
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Нет доступа к Базе Данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
-
-        private void Reg_Button_Click(object sender, RoutedEventArgs e)
+        public void Getrole()
         {
-            Registration regwindow = new Registration();
-            regwindow.Show();
-            this.Hide();
+            try
+            {
+                string sql = $"select positions_name from \"Salon\".positions p join \"Salon\".staff s on p.position_id = s.position_id where staff_id = {staff_id}";
+                using (NpgsqlConnection connection = new NpgsqlConnection(connectionstr))
+                {
+                    connection.Open();
+                    using (NpgsqlCommand cmd = new NpgsqlCommand(sql, connection))
+                    {
+                        using (NpgsqlDataReader dataReader = cmd.ExecuteReader())
+                        {
+                            while (dataReader.Read())
+                            {
+                                role = dataReader.GetString(0);
+                            }
+                            connection.Close();
+                        }
+                    }
+                    
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Нет доступа к Базе Данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
-
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        public static string HashPassword(string password, string salt)
         {
-            System.Windows.Application.Current.Shutdown();
+            string combinedString = password + salt;
+
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(combinedString);
+                byte[] hash = sha256.ComputeHash(bytes);
+
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int i = 0; i < hash.Length; i++)
+                {
+                    stringBuilder.Append(hash[i].ToString("x2"));
+                }
+
+                return stringBuilder.ToString();
+            }
         }
     }
 }

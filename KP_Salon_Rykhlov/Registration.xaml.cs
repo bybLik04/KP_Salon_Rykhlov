@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Npgsql;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -20,104 +21,45 @@ namespace KP_Salon_Rykhlov
     /// </summary>
     public partial class Registration : Window
     {
-        public Registration()
+        public string connectionstr {  get; set; }
+        public string Role { get; set; }
+        public Registration(string connstr, string role)
         {
             InitializeComponent();
+            connectionstr = connstr;
+            Role = role;
         }
-        public string connectionstring = "Provider=Microsoft.Jet.OLEDB.4.0;Data Source=" + @"C:\Users\user1\source\repos\Lab1_Rykhlov\Колледж(для студентов).mdb;Persist Security Info=False";
-
-
-
-        private void Back_Button_Click(object sender, RoutedEventArgs e)
+        private void Accept_Click(object sender, RoutedEventArgs e)
         {
-            Login loginwindow = new Login();
-            loginwindow.Show();
-            this.Hide();
+            this.DialogResult = true;
+            DataTable dataTable = new DataTable();
+            if (surname.Text.Length > 0 & name.Text.Length > 0 & login.Text.Length > 0 & pass.Text.Length > 0)
+            {
+                try
+                {
+                    using (NpgsqlConnection conn = new NpgsqlConnection(connectionstr))
+                    {
+                        conn.Open();
+                        using (NpgsqlCommand cmd = new NpgsqlCommand("SELECT \"Salon\".create_account(@surname::varchar, @name::varchar, @uname::varchar, @pass::varchar)", conn))
+                        {
+                            cmd.Parameters.AddWithValue("@surname", surname.Text);
+                            cmd.Parameters.AddWithValue("@name", name.Text);
+                            cmd.Parameters.AddWithValue("@uname", login.Text);
+                            cmd.Parameters.AddWithValue("@pass", pass.Text);
+
+                            NpgsqlDataAdapter dataAdapter = new NpgsqlDataAdapter(cmd);
+                            dataAdapter.Fill(dataTable);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+            }
+            
         }
 
-        private void Reg_Button2_Click(object sender, RoutedEventArgs e)
-        {
-            //if (LoginBox2.Text.Length > 0 & PasswordBox2.ToString().Length > 0 & PasswordBox2_repeat.ToString().Length > 0)
-            //{
-            //    if (PasswordBox2.Password == PasswordBox2_repeat.Password)
-            //    {
-            //        //string sql = "Select * from Users ;"; //WHERE Login = '" + LoginBox2.Text + "'
-            //        try
-            //        {
-            //            OleDbConnection connection = new OleDbConnection(connectionstring);
-            //            connection.Open();
-            //            OleDbCommand oleDbCommand = connection.CreateCommand();
-            //            string sql = $"SELECT * FROM Users WHERE Login = log;";
-            //            oleDbCommand.CommandText = sql;
-            //            oleDbCommand.Parameters.Add("log", OleDbType.VarChar, 255).Value = LoginBox2.Text;
-            //            var exist = oleDbCommand.ExecuteScalar();
-            //            //Data_Load(sql);
-            //            if (exist is null)
-            //            {
-            //                try
-            //                {
-            //                    connection.Close();
-            //                    string sql2 = "SELECT * FROM Users;";
-            //                    DataTable table2 = new DataTable();
-            //                    OleDbConnection connection2 = new OleDbConnection(connectionstring);
-            //                    connection.Open();
-            //                    OleDbCommand oleDbCommand2 = connection2.CreateCommand();
-            //                    oleDbCommand.CommandText = "INSERT INTO Users([Login], [Password]) values('" + LoginBox2.Text + "', '" + PasswordBox2.Password.ToString() + "')";
-            //                    oleDbCommand.ExecuteNonQuery();
-            //                    OleDbCommand command = new OleDbCommand(sql2, connection2);
-            //                    OleDbDataAdapter dataAdapter2 = new OleDbDataAdapter(command);
-            //                    dataAdapter2.Fill(table2);
-            //                    connection2.Close();
-
-            //                }
-            //                catch
-            //                {
-            //                    MessageBox.Show("Нет доступа к Базе Данных!");
-            //                    return;
-            //                }
-
-            //                MessageBox.Show("Вы успешно зарегистрировались!");
-
-            //                MainWindow mainWindow = new MainWindow();
-            //                mainWindow.Show();
-            //                mainWindow.Std_num_lbl.Visibility = Visibility.Hidden;
-            //                mainWindow.StudentNumText.Visibility = Visibility.Hidden;
-            //                mainWindow.New_Lbl.Visibility = Visibility.Hidden;
-            //                mainWindow.ChangeText.Visibility = Visibility.Hidden;
-            //                mainWindow.UpdateBtn.Visibility = Visibility.Hidden;
-            //                mainWindow.DeleteBtn.Visibility = Visibility.Hidden;
-            //                mainWindow.AddBtn.Visibility = Visibility.Hidden;
-            //                mainWindow.log_lbl.Visibility = Visibility.Hidden;
-            //                mainWindow.log_txt.Visibility = Visibility.Hidden;
-            //                mainWindow.add_adm_Btn.Visibility = Visibility.Hidden;
-            //                mainWindow.del_adm_Btn.Visibility = Visibility.Hidden;
-            //                this.Hide();
-            //            }
-            //            else
-            //            {
-            //                MessageBox.Show("Пользователь существует");
-            //            }
-            //        }
-            //        catch
-            //        {
-            //            MessageBox.Show("Нет соединения с Базой Данных");
-            //            return;
-            //        }
-            //    }
-            //    else
-            //    {
-            //        MessageBox.Show("Пароли не совпадают");
-            //    }
-            //}
-            //else
-            //{
-            //    MessageBox.Show("Заполните все поля!");
-            //}
-        }
-
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            System.Windows.Application.Current.Shutdown();
-        }
     }
 }

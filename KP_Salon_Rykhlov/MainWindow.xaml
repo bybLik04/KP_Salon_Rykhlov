@@ -5,9 +5,27 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:KP_Salon_Rykhlov"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded">
     <Grid>
-        <DataGrid x:Name="grid" d:ItemsSource="{d:SampleData}"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="197*"/>
+            <RowDefinition Height="20*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="617*"/>
+            <ColumnDefinition Width="183*"/>
+        </Grid.ColumnDefinitions>
+        <DataGrid x:Name="grid" Grid.Column="0" ItemsSource="{Binding}" Margin="10,10,10,10" Background="White" KeyDown="grid_KeyDown"/>
+
+        <ComboBox Name="Tables" Background="White" Margin="18,5,0,0"
+                      SelectionChanged="Tables_SelectionChanged" Grid.Row="1" HorizontalAlignment="Left" Width="150" Height="30" VerticalAlignment="Top" SelectedIndex="1">
+            <ComboBoxItem IsEnabled="False">Выберите таблицу</ComboBoxItem>
+        </ComboBox>
+        <Button x:Name="Save" Content="Сохранить изменения" Click="Save_OnClick" Margin="208,5,0,0" Grid.Row="1" HorizontalAlignment="Left" Width="134" Height="30" VerticalAlignment="Top"/>
+        <Button x:Name="Cancel" Content="Отменить изменения" Margin="347,5,0,0" Grid.Row="1" HorizontalAlignment="Left" Width="134" Height="30" VerticalAlignment="Top" Click="Cancel_Click"/>
+        <Button x:Name="Exit" Grid.Column="1" Content="Выход" Margin="0,0,10,0" Grid.Row="1" HorizontalAlignment="Right" Width="59" Height="30" VerticalAlignment="Center" Click="Exit_Click"/>
+        <Button x:Name="subs_info" Grid.Column="1" Content="Информация об абоненте" HorizontalAlignment="Left" Margin="22,10,0,0" VerticalAlignment="Top" Height="30" Width="151" Click="subs_info_Click"/>
+        <Button x:Name="reg" Content="Зарегистрировать нового&#xD;&#xA;пользователя" HorizontalAlignment="Left" Margin="22,316,0,0" VerticalAlignment="Top" Grid.Column="1" Width="151" Height="53" Click="reg_Click"/>
 
     </Grid>
 </Window>
