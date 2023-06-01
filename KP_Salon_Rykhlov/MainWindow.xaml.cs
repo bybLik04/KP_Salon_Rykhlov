@@ -37,12 +37,12 @@ namespace KP_Salon_Rykhlov
             if (Role == "Системный администратор") 
                 connectionstr = "Server=localhost;Port=5432;Database=postgres;User Id=postgres;Password=12345;";
             else if (Role == "Диспетчер доставки") {
-                connectionstr = "Server=localhost;Port=5432;Database=postgres;User Id=cashier;Password=cash228;";
+                connectionstr = "Server=localhost;Port=5432;Database=postgres;User Id=delivery_manager;Password=1488;";
                 reg.Visibility = Visibility.Hidden;
                 subs_info.Visibility = Visibility.Hidden;
             }
             else if (Role == "Кассир") {
-                connectionstr = "Server=localhost;Port=5432;Database=postgres;User Id=delivery_manager;Password=1488;";
+                connectionstr = "Server=localhost;Port=5432;Database=postgres;User Id=cashier;Password=cash228;";
                 reg.Visibility = Visibility.Hidden;
             }
             else
